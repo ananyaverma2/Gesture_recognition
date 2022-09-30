@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import time
 import cv2
 import numpy as np
@@ -10,13 +12,13 @@ from metrics_refbox_msgs.msg import Command, GestureRecognitionResult
 
 
 
-class Gesture_recognition():
+class Hand_Gesture_recognition():
     import mediapipe as mp
     def __init__(self) -> None:
-        rospy.loginfo("Gesture recognition node is ready...")
+        rospy.loginfo("Hand gesture recognition node is ready...")
         self.cv_bridge = CvBridge()
         self.image_queue = None
-        self.clip_size = 300 # manual number
+        self.clip_size = 150 # manual number
         self.stop_sub_flag = False
         self.cnt = 0
         self.mode = False
@@ -27,6 +29,7 @@ class Gesture_recognition():
         self.hands=self.mp.solutions.hands.Hands(self.mode,self.maxHands, self.modelC ,self.detectionCon,self.trackCon)
         self.width=1280
         self.height=720
+        self.image_sub = None
 
         # # HSR pan motion publisher
         # self.hsr_pan_pub = rospy.Publisher(
@@ -63,7 +66,7 @@ class Gesture_recognition():
         # START command from referee
         if msg.task == 4 and msg.command == 1:
 
-            print("\nStart command received from refree box")
+            print("\nStart command received from refree box for hand gesture recognition")
 
             # # set of the HSR camera to get front straight view
             # if not self.move_front_flag:
@@ -80,7 +83,7 @@ class Gesture_recognition():
 
             self.image_sub.unregister()
             self.stop_sub_flag = False
-            rospy.loginfo("Received stopped command from referee")
+            rospy.loginfo("Received stopped command from referee for hand gesture recognition")
             rospy.loginfo("Subscriber stopped")
 
 
@@ -116,7 +119,7 @@ class Gesture_recognition():
 
                     # call object inference method
                     print("converted to ros image")
-                    head_gesture_show = self.hand_gesture_recognition()
+                    hand_gesture_show = self.hand_gesture_recognition()
 
         except CvBridgeError as e:
             rospy.logerr(
@@ -174,7 +177,7 @@ class Gesture_recognition():
 
     def hand_gesture_recognition(self):
         # cam=cv2.VideoCapture(0)
-        findHands=Gesture_recognition()
+        findHands=Hand_Gesture_recognition()
         time.sleep(5)
         keyPoints=[0,4,5,9,13,17,8,12,16,20]
         hand_gesture = []
@@ -182,7 +185,7 @@ class Gesture_recognition():
         gesture_detection_msg.message_type = GestureRecognitionResult.RESULT
         
 
-        with open('default.pkl','rb') as f:
+        with open("/home/ananya/Documents/B-it-bots/gesture_benchmark/gesture_reco_ws/src/gesture_recognition_benchmark/scripts/default.pkl","rb") as f:
             gestNames=pickle.load(f)
             knownGestures=pickle.load(f)
         
@@ -215,18 +218,20 @@ class Gesture_recognition():
             #     break
         # cam.release()
 
-        print("the gestures are ", hand_gesture)
+        print("the gestures for hand gesture recognition ", hand_gesture)
         if len(hand_gesture) > 0:
-            print(" the final gesture is ", hand_gesture[0])
+            print(" the final gesture for hand gesture recognition is ", hand_gesture[0])
             # gesture_detection_msg.gestures = gesture
             gesture_detection_msg.gestures = hand_gesture
-        self.output_bb_pub.publish(gesture_detection_msg)
-        print("gesture published")
+            self.output_bb_pub.publish(gesture_detection_msg)
+            print("gesture published")
+        else:
+            print("no hand gesture detected")
         
 
 if __name__ == "__main__":
-    rospy.init_node("gesture_recognition_node")
-    gesture_recognition_obj = Gesture_recognition()
+    rospy.init_node("hand_gesture_recognition_node")
+    hand_gesture_recognition_obj = Hand_Gesture_recognition()
 
     rospy.spin()
 
