@@ -4,6 +4,7 @@ import numpy as np
 import rospy
 from sensor_msgs.msg import Image  # Image is the message type
 from cv_bridge import CvBridge, CvBridgeError
+from metrics_refbox_msgs.msg import Command
 
 
 # fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -19,8 +20,67 @@ class Gesture_recognition():
         self.stop_sub_flag = False
         self.cnt = 0
 
-        # start subscriber for image topic
-        self.image_sub = rospy.Subscriber("/hsrb/head_rgbd_sensor/rgb/image_raw", Image, self._input_image_cb)
+
+        # publisher
+        self.output_bb_pub = rospy.Publisher(
+            "/metrics_refbox_client/object_detection_result", ObjectDetectionResult, queue_size=10)
+
+        # HSR pan motion publisher
+        self.hsr_pan_pub = rospy.Publisher(
+            '/hsrb/head_trajectory_controller/command',
+            trajectory_msgs.msg.JointTrajectory, queue_size=10)
+        self.move_right_flag = False
+        self.move_left_flag = True
+
+        # set of the HSR camera to get front straight view
+        self.move_front_flag = False
+        self._hsr_head_controller('front')
+
+        # subscriber
+        self.requested_object = None
+        self.referee_command_sub = rospy.Subscriber(
+            "/metrics_refbox_client/command", Command, self._referee_command_cb)
+
+
+
+    def _referee_command_cb(self, msg):
+
+        # Referee comaand message (example)
+        '''
+        task: 1
+        command: 1
+        task_config: "{\"Target object\": \"Cup\"}"
+        uid: "0888bd42-a3dc-4495-9247-69a804a64bee"
+        '''
+
+        # START command from referee
+        if msg.task == 1 and msg.command == 1:
+
+            print("\nStart command received")
+
+            # set of the HSR camera to get front straight view
+            if not self.move_front_flag:
+                self._hsr_head_controller('front')
+
+            # start subscriber for image topic
+            self.image_sub = rospy.Subscriber("/hsrb/head_rgbd_sensor/rgb/image_raw",
+                                              Image,
+                                              self._input_image_cb)
+
+            # extract target object from task_config
+            self.requested_object = msg.task_config.split(":")[
+                1].split("\"")[1]
+            print("\n")
+            print("Requested object: ", self.requested_object)
+            print("\n")
+
+        # STOP command from referee
+        if msg.command == 2:
+
+            self.image_sub.unregister()
+            self.stop_sub_flag = False
+            rospy.loginfo("Received stopped command from referee")
+            rospy.loginfo("Subscriber stopped")
 
 
     def _input_image_cb(self, msg):
