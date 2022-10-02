@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+    <!-- launching gesture recognition benchmark node -->
+    <node pkg="gesture_recognition_benchmark" type="gesture_recognition.py" name="gesture_recognition_node" output="screen">
+    </node>
+
+    <node pkg="gesture_recognition_benchmark" type="hand_gesture.py" name="hand_gesture_recognition_node" output="screen">
+    </node>
+
+    <!-- launching metrics refbox client node -->
+    <include file="$(find metrics_refbox_client)/launch/metrics_refbox_client.launch" />
+
+</launch>
