@@ -30,27 +30,15 @@ class Hand_Gesture_recognition():
         self.width=1280
         self.height=720
         self.image_sub = None
-
-        # # HSR pan motion publisher
-        # self.hsr_pan_pub = rospy.Publisher(
-        #     '/hsrb/head_trajectory_controller/command',
-        #     trajectory_msgs.msg.JointTrajectory, queue_size=10)
-        # self.move_right_flag = False
-        # self.move_left_flag = True
-
-        # set of the HSR camera to get front straight view
         self.move_front_flag = False
-        # self._hsr_head_controller('front')
 
         # subscriber
-        # self.requested_object = None
         self.referee_command_sub = rospy.Subscriber(
             "/metrics_refbox_client/command", Command, self._referee_command_cb)
 
         # publisher
         self.output_bb_pub = rospy.Publisher(
             "/metrics_refbox_client/gesture_recognition_result", GestureRecognitionResult, queue_size=10)
-
 
 
     def _referee_command_cb(self, msg):
@@ -68,15 +56,10 @@ class Hand_Gesture_recognition():
 
             print("\nStart command received from refree box for hand gesture recognition")
 
-            # # set of the HSR camera to get front straight view
-            # if not self.move_front_flag:
-            #     self._hsr_head_controller('front')
-
             # start subscriber for image topic
             self.image_sub = rospy.Subscriber("/camera/color/image_raw",
                                               Image,
                                               self._input_image_cb)
-
 
         # STOP command from referee
         if msg.command == 2:
@@ -102,12 +85,9 @@ class Hand_Gesture_recognition():
                     self.image_queue = []
 
                 self.image_queue.append(cv_image)
-                # print("Counter: ", len(self.image_queue))
 
                 if len(self.image_queue) > self.clip_size:
-                    # Clip size reached
-                    # print("Clip size reached...")
-                    rospy.loginfo("Image received..")
+                    rospy.loginfo("Image received for hand gesture recognition ..")
 
                     self.stop_sub_flag = True
 
@@ -155,7 +135,6 @@ class Hand_Gesture_recognition():
         for row in keyPoints:
             for column in keyPoints:
                 error=error+abs(gestureMatrix[row][column]-unknownMatrix[row][column])
-        # print(error)
         return error
 
     def findGesture(self, unknownGesture,knownGestures,keyPoints,gestNames,tol):
@@ -200,29 +179,16 @@ class Hand_Gesture_recognition():
                 if len(hand_gesture) < 10:
                     unknownGesture=self.findDistances(handData[0])
                     myGesture, gesture_true=self.findGesture(unknownGesture,knownGestures,keyPoints,gestNames,tol)
-                    print("with error the gesture is : ", myGesture, "without error : ", gesture_true)
                     hand_gesture.append(gesture_true)
-                    #error=findError(knownGesture,unknownGesture,keyPoints)
-                    # cv2.putText(frame,myGesture,(100,175),cv2.FONT_HERSHEY_SIMPLEX,3,(255,0,0),8)
-                    # print("the detected gesture is : ", myGesture)
                 else:
                     break
-            # else:
-            #     print("no hand gesture detected")
-            # for hand in handData:
-            #     for ind in keyPoints:
-            #         cv2.circle(frame,hand[ind],25,(255,0,255),3)
-            # cv2.imshow('my WEBcam', frame)
-            # cv2.moveWindow('my WEBcam',0,0)
-            # if cv2.waitKey(1) & 0xff ==ord('q'):
-            #     break
-        # cam.release()
 
         print("the gestures for hand gesture recognition ", hand_gesture)
         if len(hand_gesture) > 0:
             print(" the final gesture for hand gesture recognition is ", hand_gesture[0])
             # gesture_detection_msg.gestures = gesture
             gesture_detection_msg.gestures = hand_gesture
+            # pdb.set_trace()
             self.output_bb_pub.publish(gesture_detection_msg)
             print("gesture published")
         else:

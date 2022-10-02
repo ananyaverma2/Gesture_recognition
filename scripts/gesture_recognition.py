@@ -18,10 +18,10 @@ class Gesture_recognition():
         rospy.loginfo("Head gesture recognition node is ready...")
         self.cv_bridge = CvBridge()
         self.image_queue = None
-        self.clip_size = 150 # manual number
+        self.clip_size = 100 # manual number
         self.stop_sub_flag = False
         self.cnt = 0
-        self.image_sub = None
+        # self.image_sub = None
 
 
         # # HSR pan motion publisher
