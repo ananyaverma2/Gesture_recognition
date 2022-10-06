@@ -11,6 +11,7 @@ from metrics_refbox_msgs.msg import Command, GestureRecognitionResult
 from std_msgs.msg import String
 from math import dist
 import rospy
+import time
 
 # fourcc = cv2.VideoWriter_fourcc(*'XVID')
 # out = cv2.VideoWriter('nodcontrol.avi',fourcc, 20.0, (640,480))
@@ -21,7 +22,7 @@ class Gesture_recognition():
         import mediapipe as mp
         rospy.loginfo("Gesture recognition node is ready...")
         self.cv_bridge = CvBridge()
-        self.image_queue = None
+        self.image_queue1 = None
         print("setting image queue to zero 3")
         self.clip_size = 100  # manual number
         self.stop_sub_flag = False
@@ -89,7 +90,7 @@ class Gesture_recognition():
             #     self._hsr_head_controller('front')
 
             # start subscriber for image topic
-            self.image_sub = rospy.Subscriber("/camera/color/image_raw",
+            self.image_sub = rospy.Subscriber("/camera/rgb/image_raw",
                                               Image,
                                               self._input_image_cb)
             self.image_queue = []
@@ -112,24 +113,37 @@ class Gesture_recognition():
         print(
                 "\n[Gesture recognition] cv_bridge function called")
         head_gesture_show, hand_gesture_show = [],[]
+        start_time = time.time()
+        get_frames = 0
+        yes_count = 0
         try:
-            if not self.stop_sub_flag:
+            if not self.stop_sub_flag :
 
                 # convert ros image to opencv image
-                cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
+                if (time.time() - start_time) < 0.2 or 4 < (time.time() - start_time) < 3.2:
+                    print(time.time() - start_time)
+                    cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
+                    self.image_queue.append(cv_image)
+                
                 if self.image_queue is None:
                     self.image_queue = []
                     print("setting image queue to zero 2")
-
-                self.image_queue.append(cv_image)
-                # print("Counter: ", len(self.image_queue))
-
-                if len(self.image_queue) > self.clip_size:
+            
+                if len(self.image_queue) > 100:
+                    # print(" the length of the queue is", len(self.image_queue))
+                    for image in self.image_queue:
+                        # cv2.imshow("frame", image)
+                        cv2.imwrite("/home/ananya/Documents/B-it-bots/gesture_benchmark/gesture_reco_ws/frames/frame%d.jpg" % yes_count, image)
+                        yes_count += 1
+                        # cv2.waitKey(0)
+                    # cv2.destroyAllWindows()
                     # Clip size reached
-                    # print("Clip size reached...")
+                    print("Clip size reached...")
                     rospy.loginfo("\n[Gesture recognition] Image received...")
 
                     self.stop_sub_flag = True
+
+                    # self.image_queue = self.image_queue[0:300:10]
 
                     # pop the first element
                     self.image_queue.pop(0)
@@ -367,88 +381,109 @@ class Gesture_recognition():
         counter = 0
         gesture_detected = None
         leng = len(x_coordinate)
+        print(x_coordinate)
+        # if abs(x_coordinate[0] - x_coordinate[10]) >= 0.01:
+        #     # print(" the coordinates are", x_coordinate[0], x_coordinate[leng-1])
+        #     # TODO: break the loop after 10 counter
 
-        if abs(x_coordinate[0] - x_coordinate[99]) >= 0.01:
-            print(" the coordinates are", x_coordinate[0], x_coordinate[leng-1])
-            # TODO: break the loop after 10 counter
-
-            counter = 1
+        #     counter = 1
         # print(" the coordinates are", x_coordinate[0], x_coordinate[100])
-        print(" the coordinates are", x_coordinate[0], x_coordinate[leng-1])
-        print(" the coordinates are ", x_coordinate)
-        print(" counter value ", counter)
+        # print(" the coordinates are", x_coordinate[0], x_coordinate[leng-1])
+        # print(" the coordinates are ", x_coordinate)
+        # print(" counter value ", counter)
         if counter == 0:
             gesture_detected = "stop"
         else:
             gesture_detected = "waving"
         return gesture_detected
 
+
     def stop_sign(self):
         self.gestures = []
-        # print(" [hand gesture] try to detect stop sign")
-        # flag_gesture_detected = False
-        # while flag_gesture_detected == False:
-        landmarks_0 = self.hand_landmarks.landmark[0]
-        landmarks_9 = self.hand_landmarks.landmark[9]
-        landmarks_8 = self.hand_landmarks.landmark[8]
-        coordinate_landmark_0 = [landmarks_0.x * self.width,
-                                 landmarks_0.y * self.height, landmarks_0.z]
-        coordinate_landmark_9 = [landmarks_9.x * self.width,
-                                 landmarks_9.y * self.height, landmarks_9.z]
-        coordinate_landmark_8 = [landmarks_8.x * self.width,
-                                 landmarks_8.y * self.height, landmarks_8.z]
-        x0 = coordinate_landmark_0[0]
-        y0 = coordinate_landmark_0[1]
-        x9 = coordinate_landmark_9[0]
-        y9 = coordinate_landmark_9[1]
-        x8 = coordinate_landmark_8[0]
-        y8 = coordinate_landmark_8[1]
-        z8 = coordinate_landmark_8[2]
-        x_not_true_0 = landmarks_0.x
-        y_not_true_0 = landmarks_0.y
+
+        with self.mp_hands.Hands(
+                model_complexity=0,
+                min_detection_confidence=0.5,
+                min_tracking_confidence=0.5) as hands:
+
+            for i in range(0,101):
+
+                frame = cv2.imread("/home/ananya/Documents/B-it-bots/gesture_benchmark/gesture_reco_ws/frames/frame{}.jpg".format(i))
+
+                # To improve performance, optionally mark the image as not writeable to
+                # pass by reference.
+                frame.flags.writeable = False
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                results = hands.process(frame)
+
+                landmarks_0 = results.multi_hand_landmarks[0].landmark[0]
+                print(" the length is ", len(results.multi_hand_landmarks))
+                landmarks_9 = results.multi_hand_landmarks[0].landmark[9]
+                landmarks_8 = results.multi_hand_landmarks[0].landmark[8]
+                coordinate_landmark_0 = [landmarks_0.x * self.width,
+                                        landmarks_0.y * self.height, landmarks_0.z]
+                coordinate_landmark_9 = [landmarks_9.x * self.width,
+                                        landmarks_9.y * self.height, landmarks_9.z]
+                coordinate_landmark_8 = [landmarks_8.x * self.width,
+                                        landmarks_8.y * self.height, landmarks_8.z]
+
+                x0 = coordinate_landmark_0[0]
+                y0 = coordinate_landmark_0[1]
+                z0 = coordinate_landmark_0[2]
+                x9 = coordinate_landmark_9[0]
+                y9 = coordinate_landmark_9[1]
+                x8 = coordinate_landmark_8[0]
+                y8 = coordinate_landmark_8[1]
+                z8 = coordinate_landmark_8[2]
+                print(" the coordinates are : ", x0, y0, z0)
+                self.x_coordinate.append(x0)
+                self.y_coordinate.append(y0)
+                self.z_coordinate.append(z0)
+        print(" the coordinates are : ", self.x_coordinate, self.y_coordinate, self.z_coordinate)
 
 
-        if abs(x9 - x0) < 0.05:  # since tan(0) --> ∞
-            m = 1000000000
-        else:
-            m = abs((y9 - y0)/(x9 - x0))
+                # if abs(x9 - x0) < 0.05:  # since tan(0) --> ∞
+                #     m = 1000000000
+                # else:
+                #     m = abs((y9 - y0)/(x9 - x0))
 
-        if m > 1:
-            if y9 < y0:  # since, y decreases upwards
-                self.x_coordinate.append(x_not_true_0)
-                self.y_coordinate.append(y_not_true_0)
-                self.z_coordinate.append(z8)
-                # print("x bcdevn", self.x_coordinate)
-                # print("y bcdevn", self.y_coordinate)
-                # print("z bcdevn", self.z_coordinate)
-                # print(" the length of ", len(self.x_coordinate))
-                if len(self.x_coordinate) >= 100:
-                    gesture_detected = self.check_movement(
-                        self.x_coordinate, self.y_coordinate)
-                    if gesture_detected != None:
-                        # print(" the final hand gesture is ... ", gesture_detected)
-                        # flag_gesture_detected = True
-                        self.gestures.append(gesture_detected)
-                        self.gesture_detection_msg.gestures = self.gestures
-                        self.output_bb_pub.publish(
-                            self.gesture_detection_msg)
-                        print("[hand gesture recognition] the final gesture for hand gesture recognition is ", gesture_detected)
-                        print("gesture published")
-                        self.stop_sub_flag = False
-                        # self.image_queue = []
-                        # self.gestures = []
-                        return self.gestures
-                    else:
-                        print(
-                            "[hand gesture recognition] received None from check movement")
-                else:
-                    rospy.loginfo_once(
-                        "[hand gesture recognition] no hand detected")
-                    return self.gestures
-            else:
-                return self.gestures
-        else:
-            return self.gestures
+                # if m > 1:
+                #     if y9 < y0:  # since, y decreases upwards
+                #         self.x_coordinate.append(x_not_true_0)
+                #         self.y_coordinate.append(y_not_true_0)
+                #         self.z_coordinate.append(z8)
+                #         # print("x bcdevn", self.x_coordinate)
+                #         # print("y bcdevn", self.y_coordinate)
+                #         # print("z bcdevn", self.z_coordinate)
+                #         # print(" the length of ", len(self.x_coordinate))
+                #         if len(self.x_coordinate) >= 100:
+                #             gesture_detected = self.check_movement(
+                #                 self.x_coordinate, self.y_coordinate)
+                #             if gesture_detected != None:
+                #                 # print(" the final hand gesture is ... ", gesture_detected)
+                #                 # flag_gesture_detected = True
+                #                 self.gestures.append(gesture_detected)
+                #                 self.gesture_detection_msg.gestures = self.gestures
+                #                 self.output_bb_pub.publish(
+                #                     self.gesture_detection_msg)
+                #                 print("[hand gesture recognition] the final gesture for hand gesture recognition is ", gesture_detected)
+                #                 print("gesture published")
+                #                 self.stop_sub_flag = False
+                #                 # self.image_queue = []
+                #                 # self.gestures = []
+                #                 return self.gestures
+                #             else:
+                #                 print(
+                #                     "[hand gesture recognition] received None from check movement")
+                #         else:
+                #             rospy.loginfo_once(
+                #                 "[hand gesture recognition] no hand detected")
+                #             return self.gestures
+                #     else:
+                #         return self.gestures
+                # else:
+                #     return self.gestures
+
 
     def thumbs_sign(self):
         self.gestures = []
@@ -568,11 +603,11 @@ class Gesture_recognition():
                                 " lets detect the hand gestures")
                             # print(self.hand_landmarks)
 
-                            print(" trying to detect thumb gesture")
+                            # print(" trying to detect thumb gesture")
                             self.gestures = self.thumbs_sign()
 
                             if self.gestures == []:
-                                print(" trying to detect stop gesture")
+                                # print(" trying to detect stop gesture")
                                 # print("[hand gesture] no thumb gesture found 2")
                                 self.gestures = self.stop_sign()
 
