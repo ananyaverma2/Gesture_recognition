@@ -2,7 +2,7 @@
 <launch>
 
     <!-- launching gesture recognition benchmark node -->
-    <node pkg="gesture_recognition_benchmark" type="gesture_recognition.py" name="gesture_recognition_node" output="screen">
+    <node pkg="gesture_recognition_benchmark" type="gesture_recognition_benchmark.py" name="gesture_recognition_node" output="screen">
     </node>
 
     <!-- launching metrics refbox client node -->
