@@ -39,10 +39,10 @@ Purpose | Command
 communicate with the camera  | `roslaunch realsense2_camera rs_camera.launch`
 visualize the camera topic `/camera/color/image_raw` | `rviz`
 run the code | `roslaunch gesture_recognition_benchmark gesture_recognition_benchmark.launch`
-run refree box | `roslaunch metrics_refbox_client metrics_refbox_client.launch`
+run referee box | `roslaunch metrics_refbox_client metrics_refbox_client.launch`
 
 ## How to Use the Project:
 
-1. Run the refree box and select **Gesture Recognition** task from the given set of tasks.
+1. Run the referee box and select **Gesture Recognition** task from the given set of tasks.
 2. press the start command and do the gesture infront of the camera.
-3. the result can be viewed on the refree box.
+3. the result can be viewed on the referee box.
