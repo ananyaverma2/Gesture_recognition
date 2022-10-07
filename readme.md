@@ -1,4 +1,4 @@
-# Gesture Recognition Benchmark
+# Gesture Recognition Benchmark :robot:
 
 > This task was performed in [METRICS HEART-MET Competition](https://metricsproject.eu/healthcare/heart-met-competition/) at [Cobot Maker Space](https://cobotmakerspace.org/), University of Nottingham, United Kingdom.
 >> This functionality benchmark assesses the robot’s capability of recognizing gestures performed by a human. The robot is placed in front of a human who performs a gesture. The robot needs to recognize the gesture being performed by the human.
@@ -44,5 +44,5 @@ run referee box | `roslaunch metrics_refbox_client metrics_refbox_client.launch`
 ## How to Use the Project:
 
 1. Run the referee box and select **Gesture Recognition** task from the given set of tasks.
-2. press the start command and do the gesture infront of the camera.
-3. the result can be viewed on the referee box.
+2. Press the start command and do the gesture infront of the camera.
+3. The result can be viewed on the referee box.
