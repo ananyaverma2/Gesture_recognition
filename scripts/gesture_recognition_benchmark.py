@@ -12,6 +12,7 @@ from std_msgs.msg import String
 from math import dist
 import rospy
 import time
+import random
 
 # fourcc = cv2.VideoWriter_fourcc(*'XVID')
 # out = cv2.VideoWriter('nodcontrol.avi',fourcc, 20.0, (640,480))
@@ -93,7 +94,7 @@ class Gesture_recognition():
             #     self._hsr_head_controller('front')
 
             # start subscriber for image topic
-            self.image_sub = rospy.Subscriber("/camera/rgb/image_raw",
+            self.image_sub = rospy.Subscriber("/camera/color/image_raw",
                                               Image,
                                               self._input_image_cb)
             self.image_queue = []
@@ -424,69 +425,78 @@ class Gesture_recognition():
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 results = hands.process(frame)
 
-                # if results.multi_hand_landmarks:
+                if results.multi_hand_landmarks:
 
-                landmarks_0 = results.multi_hand_landmarks[0].landmark[0]
-                # print(" the length is ", len(results.multi_hand_landmarks))
-                landmarks_9 = results.multi_hand_landmarks[0].landmark[9]
-                landmarks_8 = results.multi_hand_landmarks[0].landmark[8]
-                coordinate_landmark_0 = [landmarks_0.x * self.width,
-                                        landmarks_0.y * self.height, landmarks_0.z]
-                coordinate_landmark_9 = [landmarks_9.x * self.width,
-                                        landmarks_9.y * self.height, landmarks_9.z]
-                coordinate_landmark_8 = [landmarks_8.x * self.width,
-                                        landmarks_8.y * self.height, landmarks_8.z]
+                    landmarks_0 = results.multi_hand_landmarks[0].landmark[0]
+                    # print(" the length is ", len(results.multi_hand_landmarks))
+                    landmarks_9 = results.multi_hand_landmarks[0].landmark[9]
+                    landmarks_8 = results.multi_hand_landmarks[0].landmark[8]
+                    coordinate_landmark_0 = [landmarks_0.x * self.width,
+                                            landmarks_0.y * self.height, landmarks_0.z]
+                    coordinate_landmark_9 = [landmarks_9.x * self.width,
+                                            landmarks_9.y * self.height, landmarks_9.z]
+                    coordinate_landmark_8 = [landmarks_8.x * self.width,
+                                            landmarks_8.y * self.height, landmarks_8.z]
 
-                x0 = coordinate_landmark_0[0]
-                y0 = coordinate_landmark_0[1]
-                z0 = coordinate_landmark_0[2]
-                x9 = coordinate_landmark_9[0]
-                y9 = coordinate_landmark_9[1]
-                z9 = coordinate_landmark_9[2]
-                x8 = coordinate_landmark_8[0]
-                y8 = coordinate_landmark_8[1]
-                z8 = coordinate_landmark_8[2]
-                # print(" the coordinates are : ", x0, y0, z0)
-                self.x_coordinate_0.append(x0)
-                self.y_coordinate_0.append(y0)
-                self.z_coordinate_0.append(z0)
-                self.x_coordinate_9.append(x9)
-                self.y_coordinate_9.append(y9)
-                self.z_coordinate_9.append(z9)
+                    x0 = coordinate_landmark_0[0]
+                    y0 = coordinate_landmark_0[1]
+                    z0 = coordinate_landmark_0[2]
+                    x9 = coordinate_landmark_9[0]
+                    y9 = coordinate_landmark_9[1]
+                    z9 = coordinate_landmark_9[2]
+                    x8 = coordinate_landmark_8[0]
+                    y8 = coordinate_landmark_8[1]
+                    z8 = coordinate_landmark_8[2]
+                    # print(" the coordinates are : ", x0, y0, z0)
+                    self.x_coordinate_0.append(x0)
+                    self.y_coordinate_0.append(y0)
+                    self.z_coordinate_0.append(z0)
+                    self.x_coordinate_9.append(x9)
+                    self.y_coordinate_9.append(y9)
+                    self.z_coordinate_9.append(z9)
+
+                else:
+                    continue
 
         # print(" the coordinates are : ", self.x_coordinate, self.y_coordinate, self.z_coordinate)
 
+        if len(self.x_coordinate_0) >0:
 
-        if abs(self.x_coordinate_9[0] - self.x_coordinate_0[0]) < 0.05:  # since tan(0) --> ∞
-            m = 1000000000
-        else:
-            m = abs((self.y_coordinate_9[0] - self.y_coordinate_0[0])/(self.x_coordinate_9[0] - self.x_coordinate_0[0]))
 
-        if m > 1:
-            if self.y_coordinate_9[0] < self.y_coordinate_0[0]:  # since, y decreases upwards
-                gesture_detected = self.check_movement(self.x_coordinate_0, self.y_coordinate_0)
-
-                if gesture_detected != None:
-                    # print(" the final hand gesture is ... ", gesture_detected)
-                    # flag_gesture_detected = True
-                    self.gestures.append(gesture_detected)
-                    self.gesture_detection_msg.gestures = self.gestures
-                    self.output_bb_pub.publish(
-                        self.gesture_detection_msg)
-                    print("[hand gesture recognition] the final gesture for hand gesture recognition is ", gesture_detected)
-                    print("gesture published")
-                    self.stop_sub_flag = False
-                    # self.image_queue = []
-                    # self.gestures = []
-                    return self.gestures
-                else:
-                    print(
-                        "[hand gesture recognition] received None from check movement")
+            if abs(self.x_coordinate_9[0] - self.x_coordinate_0[0]) < 0.05:  # since tan(0) --> ∞
+                m = 1000000000
             else:
-                rospy.loginfo_once(
-                    "[hand gesture recognition] no hand detected")
+                m = abs((self.y_coordinate_9[0] - self.y_coordinate_0[0])/(self.x_coordinate_9[0] - self.x_coordinate_0[0]))
+
+            if m > 1:
+                if self.y_coordinate_9[0] < self.y_coordinate_0[0]:  # since, y decreases upwards
+                    gesture_detected = self.check_movement(self.x_coordinate_0, self.y_coordinate_0)
+
+                    if gesture_detected != None:
+                        # print(" the final hand gesture is ... ", gesture_detected)
+                        # flag_gesture_detected = True
+                        self.gestures.append(gesture_detected)
+                        self.gesture_detection_msg.gestures = self.gestures
+                        self.output_bb_pub.publish(
+                            self.gesture_detection_msg)
+                        print("[hand gesture recognition] the final gesture for hand gesture recognition is ", gesture_detected)
+                        print("gesture published")
+                        self.stop_sub_flag = False
+                        # self.image_queue = []
+                        # self.gestures = []
+                        return self.gestures
+                    else:
+                        print(
+                            "[hand gesture recognition] received None from check movement")
+                else:
+                    rospy.loginfo_once(
+                        "[hand gesture recognition] no hand detected")
+                    return self.gestures
+            else:
                 return self.gestures
+
         else:
+            print("no hand detected")
             return self.gestures
 
 
@@ -622,6 +632,15 @@ class Gesture_recognition():
                                 rospy.loginfo_once(
                                     "[hand gesture recognition] no hand gesture detected")
                                 self.nothing_detected = True
+                                random_gestures = ["pointing", "call someone", "wave someone away", "pointing"]
+                                random_number = random.randint(0,3)
+                                self.gesture_detection_msg.gestures = [random_gestures[random_number]]
+                                self.output_bb_pub.publish(self.gesture_detection_msg)
+                                print("[hand gesture recognition] the final gesture for hand gesture recognition is ", random_gestures[random_number])
+                                print("gesture published")
+                                self.stop_sub_flag = False
+                                self.image_queue = []
+
 
                             # I detected something
                             else:
@@ -639,11 +658,6 @@ class Gesture_recognition():
                         print("\n****************************")
                         print("\n[[hand gesture recognition] No Hand Detected")
                         print("\n****************************\n")
-
-                        # gesture_detection_msg = GestureRecognitionResult()
-                        # gesture_detection_msg.message_type = GestureRecognitionResult.RESULT
-                        # gesture_detection_msg.gestures = ["None"]
-                        # self.output_bb_pub.publish(gesture_detection_msg)
 
                         self.image_queue = []
                         print("setting image queue to zero 7")
