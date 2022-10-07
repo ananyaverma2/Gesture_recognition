@@ -21,12 +21,10 @@ class Gesture_recognition():
         self.image_queue = None
         self.clip_size = 100  # manual number
         self.stop_sub_flag = False
-        self.cnt = 0
         self.gesture_result = None
         self.width = 1280
         self.height = 720
         self.image_sub = None
-        self.move_front_flag = False
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
         self.mp_hands = mp.solutions.hands
@@ -39,8 +37,6 @@ class Gesture_recognition():
         self.z_coordinate_9 = []
         self.gesture_detection_msg = GestureRecognitionResult()
         self.gesture_detection_msg.message_type = GestureRecognitionResult.RESULT
-        self.function_start = None
-        self.move_front_flag = False
 
         # subscriber
         self.referee_command_sub = rospy.Subscriber(
@@ -65,9 +61,7 @@ class Gesture_recognition():
 
             self.gesture_result = None
 
-            print(
-                "\n[Gesture recognition] Start command received from refree box")
-
+            print( "\n[Gesture recognition] Start command received from refree box")
 
             # start subscriber for image topic for intel real sense camera
             self.image_sub = rospy.Subscriber("/camera/color/image_raw",
@@ -97,7 +91,6 @@ class Gesture_recognition():
         yes_count = 0
         try:
             if not self.stop_sub_flag :
-
                 # convert ros image to opencv image
                 if (time.time() - start_time) < 0.2 or 4 < (time.time() - start_time) < 3.2:
                     print(time.time() - start_time)
@@ -258,7 +251,7 @@ class Gesture_recognition():
             return self.gestures
 
     
-    def check_movement(self, x_coordinate_0, y_coordinate_0):
+    def check_movement(self):
         counter = 0
         gesture_detected = None
         my_rounded_list = []
@@ -424,8 +417,6 @@ class Gesture_recognition():
                 pass
 
     def hand_gesture_recognition(self):
-        hand_gesture = []
-
         with self.mp_hands.Hands(
                 model_complexity=0,
                 min_detection_confidence=0.5,
