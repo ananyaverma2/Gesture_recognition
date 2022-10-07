@@ -3,7 +3,7 @@
 > This task was performed in [METRICS HEART-MET Competition](https://metricsproject.eu/healthcare/heart-met-competition/) at [Cobot Maker Space](https://cobotmakerspace.org/), University of Nottingham, United Kingdom.
 >> This functionality benchmark assesses the robot’s capability of recognizing gestures performed by a human. The robot is placed in front of a human who performs a gesture. The robot needs to recognize the gesture being performed by the human.
 
-##Project Description:
+## Project Description:
 
 The gestures (dependent variable) will be chosen from a list consisting of:
 
@@ -22,7 +22,7 @@ The gestures (dependent variable) will be chosen from a list consisting of:
 
 Note: In this repo you can find the code of the gestures ticked above
 
-##Pre-requisites:
+## Pre-requisites:
 
 1. OpenCV `pip install opencv-python`
 2. Mediapipe `pip install mediapipe`
@@ -30,7 +30,7 @@ Note: In this repo you can find the code of the gestures ticked above
 4. ROS Noetic
 5. Camera (Intel RealSense camera) `sudo apt-get install ros-$ROS_DISTRO-realsense2-camera`
 
-##How to run the code:
+## How to run the code:
 
 Run the following commands on different terminals:
 
@@ -41,7 +41,7 @@ visualize the camera topic `/camera/color/image_raw` | `rviz`
 run the code | `roslaunch gesture_recognition_benchmark gesture_recognition_benchmark.launch`
 run refree box | `roslaunch metrics_refbox_client metrics_refbox_client.launch`
 
-##How to Use the Project:
+## How to Use the Project:
 
 1. Run the refree box and select **Gesture Recognition** task from the given set of tasks.
 2. press the start command and do the gesture infront of the camera.
